@@ -47,6 +47,7 @@ class TrainNet(nn.Module):
             x = F.relu(self.conv1(x, edge_index))
             x = F.dropout(x, p = self.dropout, training = self.training)
             return self.conv2(x, edge_index)
+
         elif self.conv_type == "ignn":
             self.adj_rho = 1
             x = self.ig1(self.X_0, adj, x, F.relu, self.adj_rho, A_orig=self.adj_orig)
