@@ -1,0 +1,8 @@
+-f https://data.pyg.org/whl/torch-1.5.0+cu101.html
+-f https://download.pytorch.org/whl/torch_stable.html
+
+torch==1.5.0+cu101
+torch-cluster
+torch-scatter
+torch-sparse
+torch-spline-conv

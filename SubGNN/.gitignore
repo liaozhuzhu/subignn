@@ -129,4 +129,4 @@ dmypy.json
 .pyre/
 
 # ignore datasets
-em_user/
+datasets/

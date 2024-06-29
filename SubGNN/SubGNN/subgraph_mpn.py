@@ -206,10 +206,10 @@ class SG_MPN(MessagePassing):
             **kwargs: Any additional data which is needed to construct and
                 aggregate messages, and to update node embeddings.
         """
-        size = self.__check_input__(edge_index, size)
+        size = self._check_input(edge_index, size)
 
         # run both functions in separation.
-        coll_dict = self.__collect__(self.__user_args__, edge_index, size,
+        coll_dict = self._collect(self._user_args, edge_index, size,
                                         kwargs)
 
         msg_kwargs = self.inspector.distribute('message', coll_dict)
