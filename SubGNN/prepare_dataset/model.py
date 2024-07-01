@@ -2,20 +2,27 @@
 import torch
 import torch.nn as nn
 from torch.nn import Linear, LayerNorm, ReLU
-from torch_geometric.nn import GINConv, GCNConv 
+from torch_geometric.nn import GINConv, GCNConv, global_add_pool
 import torch.nn.functional as F
 from layers import ImplicitGraph
 
 # General	
 import numpy as np	
 import torch
-import utils
+import ignn_utils
+import networkx as nx
 
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
 class TrainNet(nn.Module):
     def __init__(self, nfeat, nhid, nclass, conv_type, dropout, kappa=0.9, adj_orig=None):
         super(TrainNet, self).__init__()
+
+        self.num_nodes = 57333 # for em_user dataset
+        self.conv_type = conv_type
+        self.adj = None
+        self.adj_rho = None
+        self.adj_orig = adj_orig
 
         # GINConv
         if conv_type == "gin": 
@@ -31,9 +38,9 @@ class TrainNet(nn.Module):
 
         # IGNN
         if conv_type == "ignn":
-            self.ig1 = ImplicitGraph(nfeat, nhid, num_node, kappa)
-            self.ig2 = ImplicitGraph(nhid, nhid, num_node, kappa)
-            self.ig3 = ImplicitGraph(nhid, nhid, num_node, kappa)
+            self.ig1 = ImplicitGraph(nfeat, nhid, self.num_nodes, kappa)
+            self.ig2 = ImplicitGraph(nhid, nhid, self.num_nodes, kappa)
+            self.ig3 = ImplicitGraph(nhid, nhid, self.num_nodes, kappa)
             self.adj_orig = adj_orig
             self.adj_rho = None
             self.X_0 = None
@@ -42,17 +49,54 @@ class TrainNet(nn.Module):
 
         self.dropout = dropout
 
+    @staticmethod
+    def create_batch_tensor(self,subgraph_file, num_nodes):
+        with open(subgraph_file, 'r') as f:
+            lines = f.readlines()
+
+        # Initialize the batch tensor with -1, assuming no subgraph exceeds num_nodes
+        batch = torch.full((num_nodes,), -1, dtype=torch.long)
+        label_map = {}
+        next_label_index = 0
+    
+        for line in lines:
+            parts = line.strip().split()
+            nodes = list(map(int, parts[0].split('-')))
+            label = parts[1]
+            split = parts[2]
+
+            if label not in label_map:
+                label_map[label] = next_label_index
+                next_label_index += 1
+
+            # Assuming you want to create a batch tensor for training data
+            if split == 'train':
+                for node in nodes:
+                    batch[node] = label  # Use the label as the batch index
+
+        return batch
+
     def forward(self, x, edge_index):
+        self.adj_rho = 1
+        edge_list_file = '../datasets/em_user/edge_list.txt'
+        subgraph_file = "../datasets/em_user/subgraphs.pth"
+        edges = np.loadtxt(edge_list_file, dtype=int)
+        G = nx.Graph()
+        G.add_edges_from(edges)
+        adj = nx.adjacency_matrix(G)
+        adj = torch.tensor(adj.todense()).to(device)
+        #adj = edge_index
+        print("THIS IS ADJ: ", adj.shape[1])
         if self.conv_type == "gin" or self.conv_type == "gcn":
             x = F.relu(self.conv1(x, edge_index))
             x = F.dropout(x, p = self.dropout, training = self.training)
             return self.conv2(x, edge_index)
 
         elif self.conv_type == "ignn":
-            self.adj_rho = 1
             x = self.ig1(self.X_0, adj, x, F.relu, self.adj_rho, A_orig=self.adj_orig)
             x = self.ig2(self.X_0, adj, x, F.relu, self.adj_rho, A_orig=self.adj_orig)
             x = self.ig3(self.X_0, adj, x, F.relu, self.adj_rho, A_orig=self.adj_orig).T
+            batch = self.create_batch_tensor(self,subgraph_file, self.num_nodes)
             x = global_add_pool(x, batch)
             x = F.relu(self.V_0(x))
             x = F.dropout(x, p=self.dropout, training=self.training)

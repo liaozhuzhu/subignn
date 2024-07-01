@@ -5,10 +5,10 @@ sys.path.insert(0, '..') # add config to path
 import config as general_config
 
 # Output directory ('density' as an example)
-DATASET_DIR = Path(general_config.PROJECT_ROOT) / "density"
+DATASET_DIR = Path(general_config.PROJECT_ROOT) / "em_user"
 
 # Flags
-GENERATE_SYNTHETIC_G = True # whether to generate synthetic graph with below specified properties
+GENERATE_SYNTHETIC_G = False # whether to generate synthetic graph with below specified properties
 GENERATE_NODE_EMB = True # whether to generate node embeddings
 
 # Random Seed
@@ -41,8 +41,10 @@ CC_RANGE = [1, 1, 1, 1, 5, 6, 7, 8, 9, 10]
 MAX_TRIES = 100
 
 # Parameters for training node embeddings for base graph
-CONV = "graphsaint_gcn" 
-MINIBATCH = "GraphSaint"
+#CONV = "graphsaint_gcn" 
+#MINIBATCH = "GraphSaint"
+CONV = "ignn"
+MINIBATCH = "NeighborSampler"
 POSSIBLE_BATCH_SIZES = [512, 1024]
 POSSIBLE_HIDDEN = [128, 256]
 POSSIBLE_OUTPUT = [64]
