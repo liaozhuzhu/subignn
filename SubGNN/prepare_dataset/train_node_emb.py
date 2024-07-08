@@ -3,6 +3,7 @@ import numpy as np
 import random
 import argparse
 import os
+import pdb
 
 import config_prepare_dataset as config
 import preprocess
@@ -57,8 +58,8 @@ def train(epoch, model, optimizer):
 
     # Iterate through minibatches
     for data in loader:
-        
-        if config.MINIBATCH == "NeighborSampler": data = preprocess.set_data(data, all_data, config.MINIBATCH) 
+        #if config.MINIBATCH == "NeighborSampler": data = preprocess.set_data(data, all_data, config.MINIBATCH) 
+        data = all_data
         curr_train_pos = data.edge_index[:, data.train_mask] 
         curr_train_neg = negative_sampling(curr_train_pos, num_neg_samples=curr_train_pos.size(1) // 4) 
         curr_train_total = torch.cat([curr_train_pos, curr_train_neg], dim=-1) 
@@ -68,7 +69,7 @@ def train(epoch, model, optimizer):
         # Perform training
         data.to(device)
         optimizer.zero_grad()
-        out = model(data.x, data.edge_index)
+        out = model(data.x, data.edge_index) # possible embedding
         curr_dot_embed = utils.el_dot(out, curr_train_total)
         loss = utils.calc_loss_both(data, curr_dot_embed)        
         if torch.isnan(loss) == False: 

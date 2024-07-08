@@ -22,7 +22,7 @@ import sys
 sys.path.insert(0, '../') # add config to path
 import config_prepare_dataset as config
 import utils
-
+import pdb
 
 def read_graphs(edge_f):
     """

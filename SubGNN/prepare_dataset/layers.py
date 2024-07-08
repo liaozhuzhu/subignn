@@ -8,9 +8,9 @@ from torch.nn import Parameter
 from torch.nn import Module
 import torch.nn.functional as F
 from torch.autograd import Function
-from ignn_utils import projection_norm_inf, projection_norm_inf_and_1, SparseDropout
+from ignn_utils import projection_norm_inf, projection_norm_inf_and_1, SparseDropout, aug_normalized_adjacency
 from functions import ImplicitFunction
-
+from scipy.sparse import coo_array
 
 class ImplicitGraph(Module):
     """
